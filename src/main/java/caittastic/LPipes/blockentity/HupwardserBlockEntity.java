@@ -40,9 +40,44 @@ public class HupwardserBlockEntity extends BlockEntity {
    //code that gets ran every tick, the main logic for our block entity
    public static void tick(Level level, BlockPos pos, BlockState state, HupwardserBlockEntity blockEntity) {
       ItemStackHandler inventory = blockEntity.itemHandler;
-      int flow = 1;
-      //----- try extraction -----
-      Direction extractDirection = Direction.DOWN;
+      int movementAmount = 4;
+      tryExtract(Direction.DOWN, pos, inventory, level, movementAmount);
+      tryInsert(Direction.UP, pos, inventory, level, movementAmount);
+   }
+
+   private static void tryInsert(Direction insertDirection, BlockPos pos, IItemHandler inventory, Level level, int movementAmount) {
+      if(!level.isClientSide() && inventory != null){
+         Direction themFacingMe = insertDirection.getOpposite();
+         BlockPos posTarget = pos.relative(insertDirection);
+         BlockEntity tileTarget = level.getBlockEntity(posTarget);
+         if(tileTarget != null){
+            IItemHandler handlerOutput = tileTarget.getCapability(ForgeCapabilities.ITEM_HANDLER, themFacingMe).orElse(null);
+            if(handlerOutput != null){
+               ItemStack drain = inventory.extractItem(0, movementAmount, true); //simulate draining items
+               int sizeStarted = drain.getCount();
+               //if drain is not an empty stack
+               if(!drain.isEmpty()){
+                  //iterate over all the slots in the output itemhandler
+                  for (int slot = 0; slot < handlerOutput.getSlots(); slot++) {
+                     drain = handlerOutput.insertItem(slot, drain, false); //actually drain items
+                     if(drain.isEmpty()){
+                        break; //loop over the output inventory until drain has been emptied, or we get to the end of the inventory
+                     }
+                  }
+               }
+               int sizeAfter = sizeStarted - drain.getCount(); //the amount of items left over after attempting to insert into all the output inventory slots
+               if(sizeAfter > 0)
+                  inventory.extractItem(0, sizeAfter, false);
+            }
+         }
+      }
+   }
+
+
+   private static void tryExtract(Direction extractDirection, BlockPos pos, IItemHandler inventory, Level level, int movementAmount) {
+      //doesnt extract if our inventory has *any* in, rather than if our inventory cannot accept more items
+      //need to fix that
+
       BlockPos extractPos = pos.relative(extractDirection);
       if(inventory.getStackInSlot(0).isEmpty()){
          BlockEntity tile = level.getBlockEntity(extractPos);
@@ -51,44 +86,15 @@ public class HupwardserBlockEntity extends BlockEntity {
             if(extractItemHandler != null){
                for (int i = 0; i < extractItemHandler.getSlots(); i++) {
                   //simulates extracting from the current slot
-                  ItemStack targetItem = extractItemHandler.extractItem(i, flow, true);
+                  ItemStack targetItem = extractItemHandler.extractItem(i, movementAmount, true);
                   //if the results of extraction is empty, skip this loop
                   if(targetItem.isEmpty())
                      continue;
                   //i barely understand this bit
-                  targetItem = extractItemHandler.extractItem(i, flow, false); //extract quantity from the currently iterated slot
+                  targetItem = extractItemHandler.extractItem(i, movementAmount, false); //extract quantity from the currently iterated slot
                   ItemStack result = inventory.insertItem(0, targetItem.copy(), false); //insert into ourselves
                   targetItem.setCount(result.getCount()); //set the currently iterated slot into leftovers
                   return; //stop looping
-               }
-            }
-         }
-      }
-      //----- try insertion -----
-      Direction insertDirection = Direction.UP;
-      if(!level.isClientSide()){
-         if(inventory != null){
-            Direction themFacingMe = insertDirection.getOpposite();
-            BlockPos posTarget = pos.relative(insertDirection);
-            BlockEntity tileTarget = level.getBlockEntity(posTarget);
-            if(tileTarget != null){
-               IItemHandler handlerOutput = tileTarget.getCapability(ForgeCapabilities.ITEM_HANDLER, themFacingMe).orElse(null);
-               if(handlerOutput != null){
-                  ItemStack drain = inventory.extractItem(0, flow, true); //simulate draining items
-                  int sizeStarted = drain.getCount();
-                  //if drain is not an empty stack
-                  if(!drain.isEmpty()){
-                     //iterate over all the slots in the output itemhandler
-                     for (int slot = 0; slot < handlerOutput.getSlots(); slot++) {
-                        drain = handlerOutput.insertItem(slot, drain, false); //actually drain items
-                        if(drain.isEmpty()){
-                           break; //loop over the output inventory until drain has been emptied or we get to the end of the inventory
-                        }
-                     }
-                  }
-                  int sizeAfter = sizeStarted - drain.getCount(); //the amount of items left over after attempting to insert into all of the output inventory slots
-                  if(sizeAfter > 0)
-                     inventory.extractItem(0, sizeAfter, false);
                }
             }
          }
