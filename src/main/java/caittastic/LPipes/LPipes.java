@@ -2,6 +2,8 @@ package caittastic.LPipes;
 
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.ItemBlockRenderTypes;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
@@ -39,6 +41,7 @@ public class LPipes
 
         // Register ourselves for server and other game events we are interested in
         MinecraftForge.EVENT_BUS.register(this);
+        modEventBus.addListener(this::clientSetup);
     }
 
     private void commonSetup(final FMLCommonSetupEvent event)
@@ -46,6 +49,10 @@ public class LPipes
         // Some common setup code
         LOGGER.info("HELLO FROM COMMON SETUP");
         LOGGER.info("DIRT BLOCK >> {}", ForgeRegistries.BLOCKS.getKey(Blocks.DIRT));
+    }
+
+    private void clientSetup(final FMLCommonSetupEvent event){
+        //ItemBlockRenderTypes.setRenderLayer(Registries.HUPWARDSER.get(), RenderType.cutout());
     }
 
     // You can use SubscribeEvent and let the Event Bus discover methods to call

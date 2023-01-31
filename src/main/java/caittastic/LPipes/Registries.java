@@ -6,6 +6,7 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.Material;
@@ -34,7 +35,7 @@ public class Registries {
     //registering blocks
     public static final RegistryObject<Block> HUPWARDSER =
             registerBlockWithItem("hupwardser", () ->
-                    new HupwardserBlock(BlockBehaviour.Properties.of(Material.STONE)), CreativeModeTab.TAB_REDSTONE);
+                    new HupwardserBlock(BlockBehaviour.Properties.of(Material.STONE).noOcclusion()), CreativeModeTab.TAB_REDSTONE);
 
     //registering block entities
     public static final RegistryObject<BlockEntityType<HupwardserBlockEntity>> HUPWARDSER_BLOCK_ENTITY =
